@@ -13,13 +13,13 @@ function normalizeTaskFromApi(task) {
 }
 
 function buildCreatePayload(title) {
-  // Try to satisfy either {title} or {description} backend contract.
-  return { title, description: title };
+  // Backend contract (FastAPI): TaskCreate { title: str, completed: bool }
+  return { title };
 }
 
 function buildUpdatePayload({ title, completed }) {
-  // Include both sets of names to maximize compatibility with backend schema.
-  return { title, description: title, completed, is_completed: completed };
+  // Backend contract (FastAPI): TaskUpdate { title?: str, completed?: bool }
+  return { title, completed };
 }
 
 // PUBLIC_INTERFACE

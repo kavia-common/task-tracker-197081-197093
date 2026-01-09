@@ -1,6 +1,21 @@
 const DEFAULT_BASE_URL = 'http://localhost:3001';
 
 /**
+ * Get the API base URL for all frontend requests.
+ *
+ * Priority:
+ *  1) REACT_APP_API_BASE (recommended)
+ *  2) REACT_APP_BACKEND_URL (legacy/alternate)
+ *  3) DEFAULT_BASE_URL (http://localhost:3001)
+ */
+function getApiBaseUrl() {
+  const envBase = process.env.REACT_APP_API_BASE || process.env.REACT_APP_BACKEND_URL;
+  if (!envBase) return DEFAULT_BASE_URL;
+  // Prevent accidental trailing slash causing double slashes in URLs.
+  return String(envBase).replace(/\/+$/, '');
+}
+
+/**
  * Ensures we surface useful error messages from the backend (FastAPI).
  */
 async function parseErrorResponse(response) {
@@ -16,7 +31,8 @@ async function parseErrorResponse(response) {
 }
 
 async function request(path, options = {}) {
-  const response = await fetch(`${DEFAULT_BASE_URL}${path}`, {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}${path}`, {
     headers: {
       'Content-Type': 'application/json',
       ...(options.headers || {})
@@ -42,7 +58,7 @@ export async function listTasks() {
 
 // PUBLIC_INTERFACE
 export async function createTask(payload) {
-  /** Create a task. payload: { title: string } or { description: string } depending on backend. */
+  /** Create a task. payload: { title: string } (backend contract). */
   return request('/tasks', { method: 'POST', body: JSON.stringify(payload) });
 }
 
@@ -63,6 +79,6 @@ export async function deleteTask(taskId) {
 
 // PUBLIC_INTERFACE
 export async function clearCompleted() {
-  /** Clear completed tasks. If backend doesn't support this route, caller can fallback to per-task deletes. */
+  /** Clear completed tasks via backend batch route. */
   return request('/tasks/clear-completed', { method: 'POST' });
 }
